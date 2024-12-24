@@ -1,8 +1,8 @@
-from airflow.plugins_manager import AirflowPlugin
+# from airflow.plugins_manager import AirflowPlugin
 
-from .listeners import DatasetListeners
+# from .listeners import DatasetListeners
 
 
-class AirbridgePlugin(AirflowPlugin):
-    name = "airflow_airbridge"
-    listeners = [DatasetListeners()]
+# class AirbridgePlugin(AirflowPlugin):
+#     name = "airflow_airbridge"
+#     listeners = [DatasetListeners()]

@@ -27,7 +27,9 @@ class BrokerSettings(BaseModel):
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix='AIRBRIDGE__', env_nested_delimiter='__')
+    model_config = SettingsConfigDict(
+        env_prefix="AIRBRIDGE__", env_nested_delimiter="__"
+    )
 
     general: GeneralSettings
     broker: BrokerSettings
