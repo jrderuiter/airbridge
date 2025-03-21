@@ -1,5 +1,5 @@
 # Builder image, used for building our wheel.
-FROM python:3.12-slim as builder
+FROM python:3.12-slim AS builder
 
 RUN pip install poetry==1.8.3
 
@@ -21,9 +21,7 @@ RUN poetry build
 # install our wheel. Note we also include Airflow
 # in the pip install to avoid accidentally
 # upgrading/downgrading Airflow.
-FROM apache/airflow:2.10.1 as runtime
-
-COPY docker/airflow/patches/airflow /home/airflow/.local/lib/python3.12/site-packages/airflow
+FROM apache/airflow:2.10.1 AS runtime
 
 COPY --from=builder /app/dist /tmp/dist
 RUN python -m pip install --no-cache-dir \

@@ -4,7 +4,7 @@ from typing import AsyncGenerator, Iterable, Optional
 import aio_pika
 
 
-class Client:
+class BrokerClient:
     async def listen(self) -> AsyncGenerator[bytes, None]:
         raise NotImplementedError()
         yield b""  # Make this a generator for pyright.
@@ -13,7 +13,7 @@ class Client:
         raise NotImplementedError()
 
 
-class RmqClient(Client):
+class RmqClient(BrokerClient):
     def __init__(
         self,
         url: str,

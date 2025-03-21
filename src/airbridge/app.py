@@ -5,12 +5,11 @@ import sys
 import httpx
 import structlog
 import typer
-from pydantic import ValidationError
 
-from .clients import RmqClient
-from .model import BridgeDatasetEvent
+from .brokers import RmqClient
+from .client import AirbridgeClient
 
-cli = typer.Typer()
+cli = typer.Typer(pretty_exceptions_enable=False)
 
 
 @cli.command()
@@ -65,31 +64,26 @@ async def _loop(
 ):
     logger = structlog.get_logger()
 
-    broker_client = RmqClient(url=broker_url, exchange_name=exchange_name)
+    airbridge_client = AirbridgeClient(
+        broker_client=RmqClient(url=broker_url, exchange_name=exchange_name),
+    )
+
     airflow_client = AirflowClient(url=airflow_url)
 
-    async for message in broker_client.listen():
-        try:
-            event = BridgeDatasetEvent.model_validate_json(message)
-        except ValidationError:
-            logger.error("event_parsing_failed", message=message)
-            continue
-
-        if event.source != instance_id:
+    async for event in airbridge_client.listen():
+        if event.source_id != instance_id:
             await airflow_client.create_dataset_event(
                 dataset_uri=event.dataset_uri, extra=event.extra
             )
             logger.info(
-                "event_forwarded",
+                "forwarded_event",
                 dataset_uri=event.dataset_uri,
-                source_id=event.source,
                 extra=event.extra,
             )
         else:
             logger.info(
-                "event_skipped",
+                "skipped_own_event",
                 dataset_uri=event.dataset_uri,
-                source_id=event.source,
                 extra=event.extra,
             )
 

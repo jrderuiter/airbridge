@@ -36,9 +36,7 @@ def on_dataset_created(
 
 
 @hookspec
-def on_dataset_changed(
-    dataset: Dataset
-):
+def on_dataset_changed(dataset: Dataset):
     """Execute when dataset change is registered."""
 
 

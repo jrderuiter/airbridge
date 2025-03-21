@@ -1,20 +1,17 @@
-x-airflow-common:
-  &airflow-common
+x-airflow-common: &airflow-common
   image: airflow_airbridge
   build:
     context: ../../
     dockerfile: ./docker/airflow/Dockerfile
   environment:
     AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "false"
     AIRFLOW__WEBSERVER__SECRET_KEY: "DUMMY"
     AIRFLOW__SCHEDULER__DAG_DIR_LIST_INTERVAL: "30"
+    AIRFLOW__WEBSERVER__INSTANCE_NAME: ${AIRFLOW_WEBSERVER_INSTANCE_NAME}
     AIRFLOW__WEBSERVER__NAVBAR_COLOR: ${AIRFLOW_NAVBAR_COLOR}
-    AIRBRIDGE__GENERAL__INSTANCE_ID: ${AIRBRIDGE__GENERAL__INSTANCE_ID}
-    AIRBRIDGE__BROKER__HOST: ${AIRBRIDGE__BROKER__HOST}
-    AIRBRIDGE__BROKER__LOGIN: ${AIRBRIDGE__BROKER__LOGIN}
-    AIRBRIDGE__BROKER__PASSWORD: ${AIRBRIDGE__BROKER__PASSWORD}
-    AIRBRIDGE__BROKER__EXCHANGE: ${AIRBRIDGE__BROKER__EXCHANGE}
-    AIRBRIDGE__BROKER__QUEUE_PREFIX: ${AIRBRIDGE__BROKER__QUEUE_PREFIX}
+    AIRFLOW_CONN_AIRBRIDGE_BROKER: ${AIRBRIDGE_BROKER_URL}/?exchange_name=${AIRBRIDGE_EXCHANGE_NAME}
+    AIRBRIDGE_INSTANCE_ID: ${AIRBRIDGE_INSTANCE_ID}
   volumes: !override
     - ../../${DAG_DIR}:/opt/airflow/dags
   networks:
@@ -45,17 +42,11 @@ services:
       context: ../../
       dockerfile: ./docker/airflow/Dockerfile
     entrypoint: airbridge
-    environment:
-      AIRBRIDGE__GENERAL__INSTANCE_ID: ${AIRBRIDGE__GENERAL__INSTANCE_ID}
-      AIRBRIDGE__BROKER__HOST: ${AIRBRIDGE__BROKER__HOST}
-      AIRBRIDGE__BROKER__LOGIN: ${AIRBRIDGE__BROKER__LOGIN}
-      AIRBRIDGE__BROKER__PASSWORD: ${AIRBRIDGE__BROKER__PASSWORD}
-      AIRBRIDGE__BROKER__EXCHANGE: ${AIRBRIDGE__BROKER__EXCHANGE}
-      AIRBRIDGE__BROKER__QUEUE_PREFIX: ${AIRBRIDGE__BROKER__QUEUE_PREFIX}
-      AIRBRIDGE__AIRFLOW__HOST: airflow-webserver
-      AIRBRIDGE__AIRFLOW__PORT: "8080"
-      AIRBRIDGE__AIRFLOW__LOGIN: airflow
-      AIRBRIDGE__AIRFLOW__PASSWORD: airflow
+    command: |
+      --instance-id ${AIRBRIDGE_INSTANCE_ID}
+      --broker-url ${AIRBRIDGE_BROKER_URL}
+      --exchange-name ${AIRBRIDGE_EXCHANGE_NAME}
+      --airflow-url http://airflow:airflow@airflow-webserver:8080/
     restart: on-failure
     networks:
       - default

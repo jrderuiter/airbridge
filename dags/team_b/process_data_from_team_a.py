@@ -1,16 +1,14 @@
+import pendulum
 from airflow import DAG
 from airflow.datasets import Dataset
 from airflow.operators.python import PythonOperator
-import pendulum
 
-
-input_dataset = Dataset("my_favorite_dataset")
-
+input_dataset = Dataset("local://team_a/dataset_1")
 
 with DAG(
-    dag_id="example_consumer",
+    dag_id="process_data_from_team_a",
     schedule=[input_dataset],
-    start_date=pendulum.yesterday(tz="UTC")
+    start_date=pendulum.yesterday(tz="UTC"),
 ):
     PythonOperator(
         task_id="hello_world",

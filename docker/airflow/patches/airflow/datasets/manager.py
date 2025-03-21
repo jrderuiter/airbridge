@@ -58,14 +58,18 @@ class DatasetManager(LoggingMixin):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def create_datasets(self, dataset_models: list[DatasetModel], session: Session) -> None:
+    def create_datasets(
+        self, dataset_models: list[DatasetModel], session: Session
+    ) -> None:
         """Create new datasets."""
         for dataset_model in dataset_models:
             session.add(dataset_model)
         session.flush()
 
         for dataset_model in dataset_models:
-            self.notify_dataset_created(dataset=Dataset(uri=dataset_model.uri, extra=dataset_model.extra))
+            self.notify_dataset_created(
+                dataset=Dataset(uri=dataset_model.uri, extra=dataset_model.extra)
+            )
 
     @classmethod
     @internal_api_call
@@ -90,7 +94,11 @@ class DatasetManager(LoggingMixin):
         dataset_model = session.scalar(
             select(DatasetModel)
             .where(DatasetModel.uri == dataset.uri)
-            .options(joinedload(DatasetModel.consuming_dags).joinedload(DagScheduleDatasetReference.dag))
+            .options(
+                joinedload(DatasetModel.consuming_dags).joinedload(
+                    DagScheduleDatasetReference.dag
+                )
+            )
         )
         if not dataset_model:
             cls.logger().warning("DatasetModel %s not found", dataset)
@@ -114,7 +122,9 @@ class DatasetManager(LoggingMixin):
         session.add(dataset_event)
 
         dags_to_queue_from_dataset = {
-            ref.dag for ref in dataset_model.consuming_dags if ref.dag.is_active and not ref.dag.is_paused
+            ref.dag
+            for ref in dataset_model.consuming_dags
+            if ref.dag.is_active and not ref.dag.is_paused
         }
         dags_to_queue_from_dataset_alias = set()
         if source_alias_names:
@@ -150,7 +160,9 @@ class DatasetManager(LoggingMixin):
         Stats.incr("dataset.updates")
 
         dags_to_queue = dags_to_queue_from_dataset | dags_to_queue_from_dataset_alias
-        cls._queue_dagruns(dataset_id=dataset_model.id, dags_to_queue=dags_to_queue, session=session)
+        cls._queue_dagruns(
+            dataset_id=dataset_model.id, dags_to_queue=dags_to_queue, session=session
+        )
         session.flush()
         return dataset_event
 
@@ -169,7 +181,9 @@ class DatasetManager(LoggingMixin):
         get_listener_manager().hook.on_dataset_event_created(event=event)
 
     @classmethod
-    def _queue_dagruns(cls, dataset_id: int, dags_to_queue: set[DagModel], session: Session) -> None:
+    def _queue_dagruns(
+        cls, dataset_id: int, dags_to_queue: set[DagModel], session: Session
+    ) -> None:
         # Possible race condition: if multiple dags or multiple (usually
         # mapped) tasks update the same dataset, this can fail with a unique
         # constraint violation.
@@ -205,21 +219,31 @@ class DatasetManager(LoggingMixin):
             cls.logger().debug("consuming dag ids %s", queued_dag_ids)
 
     @classmethod
-    def _postgres_queue_dagruns(cls, dataset_id: int, dags_to_queue: set[DagModel], session: Session) -> None:
+    def _postgres_queue_dagruns(
+        cls, dataset_id: int, dags_to_queue: set[DagModel], session: Session
+    ) -> None:
         from sqlalchemy.dialects.postgresql import insert
 
         values = [{"target_dag_id": dag.dag_id} for dag in dags_to_queue]
-        stmt = insert(DatasetDagRunQueue).values(dataset_id=dataset_id).on_conflict_do_nothing()
+        stmt = (
+            insert(DatasetDagRunQueue)
+            .values(dataset_id=dataset_id)
+            .on_conflict_do_nothing()
+        )
         session.execute(stmt, values)
 
     @classmethod
-    def _send_dag_priority_parsing_request(cls, file_locs: Iterable[str], session: Session) -> None:
+    def _send_dag_priority_parsing_request(
+        cls, file_locs: Iterable[str], session: Session
+    ) -> None:
         if session.bind.dialect.name == "postgresql":
             return cls._postgres_send_dag_priority_parsing_request(file_locs, session)
         return cls._slow_path_send_dag_priority_parsing_request(file_locs, session)
 
     @classmethod
-    def _slow_path_send_dag_priority_parsing_request(cls, file_locs: Iterable[str], session: Session) -> None:
+    def _slow_path_send_dag_priority_parsing_request(
+        cls, file_locs: Iterable[str], session: Session
+    ) -> None:
         def _send_dag_priority_parsing_request_if_needed(fileloc: str) -> str | None:
             # Don't error whole transaction when a single DagPriorityParsingRequest item conflicts.
             # https://docs.sqlalchemy.org/en/14/orm/session_transaction.html#using-savepoint
@@ -228,14 +252,18 @@ class DatasetManager(LoggingMixin):
                 with session.begin_nested():
                     session.merge(req)
             except exc.IntegrityError:
-                cls.logger().debug("Skipping request %s, already present", req, exc_info=True)
+                cls.logger().debug(
+                    "Skipping request %s, already present", req, exc_info=True
+                )
                 return None
             return req.fileloc
 
         (_send_dag_priority_parsing_request_if_needed(fileloc) for fileloc in file_locs)
 
     @classmethod
-    def _postgres_send_dag_priority_parsing_request(cls, file_locs: Iterable[str], session: Session) -> None:
+    def _postgres_send_dag_priority_parsing_request(
+        cls, file_locs: Iterable[str], session: Session
+    ) -> None:
         from sqlalchemy.dialects.postgresql import insert
 
         stmt = insert(DagPriorityParsingRequest).on_conflict_do_nothing()

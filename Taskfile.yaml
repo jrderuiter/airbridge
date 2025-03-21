@@ -1,16 +1,16 @@
-version: '3'
+version: "3"
 
 tasks:
   start:
     desc: Start the Docker stack
     cmds:
-      - docker-compose -f docker/rabbitmq/docker-compose.yaml up -d
-      - docker compose -p airflow-publisher -f docker/airflow/docker-compose.yaml -f docker/airflow/docker-compose.overrides.yaml --env-file docker/airflow.env --env-file docker/airflow-publisher.env up --build -d
-      - docker compose -p airflow-consumer -f docker/airflow/docker-compose.yaml -f docker/airflow/docker-compose.overrides.yaml --env-file docker/airflow.env --env-file docker/airflow-consumer.env up --build -d
+      - docker compose -f docker/rabbitmq/docker-compose.yaml up -d
+      - docker compose -p airflow-team-a -f docker/airflow/docker-compose.yaml -f docker/airflow/docker-compose.overrides.yaml --env-file docker/airflow-team-a.env up --build -d
+      - docker compose -p airflow-team-b -f docker/airflow/docker-compose.yaml -f docker/airflow/docker-compose.overrides.yaml --env-file docker/airflow-team-b.env up -d
 
   stop:
     desc: Stop the Docker stack.
     cmds:
-      - docker-compose -f docker/rabbitmq/docker-compose.yaml down -v
-      - docker compose -p airflow-publisher -f docker/airflow/docker-compose.yaml -f docker/airflow/docker-compose.overrides.yaml --env-file docker/airflow.env --env-file docker/airflow-publisher.env down -v
-      - docker compose -p airflow-consumer -f docker/airflow/docker-compose.yaml -f docker/airflow/docker-compose.overrides.yaml --env-file docker/airflow.env --env-file docker/airflow-consumer.env down -v
+      - docker compose -f docker/rabbitmq/docker-compose.yaml down -v
+      - docker compose -p airflow-team-a -f docker/airflow/docker-compose.yaml -f docker/airflow/docker-compose.overrides.yaml --env-file docker/airflow-team-a.env down -v
+      - docker compose -p airflow-team-b -f docker/airflow/docker-compose.yaml -f docker/airflow/docker-compose.overrides.yaml --env-file docker/airflow-team-b.env down -v
