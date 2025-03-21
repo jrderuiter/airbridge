@@ -135,6 +135,13 @@ The `create_datasets_a` DAG in the `Team A` will update an example dataset calle
 
 Try this out by triggering a manual run of the `create_datasets_a` DAG from Airflow A and viewing the results in Airflow B.
 
+To stop the Docker stack, run:
+
+```
+task stop
+```
+
+
 ## Deployment
 
 To deploy Airbridge, you first need to deploy a supported message broker such as RabbitMQ. For an example on how to do this with Docker, see our example in `docker/rabbitmq/docker-compose.yaml`.
